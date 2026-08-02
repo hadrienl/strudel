@@ -163,6 +163,20 @@ if (late.length) remarks.push(`couche(s) $: n° ${late.join(', ')} : entrée apr
 // Les avertissements de Strudel signalent des couches partiellement silencieuses.
 for (const w of warnings) problems.push(`Strudel : ${w}`);
 
+// Un soundfont `gm_*` mal nommé ne joue rien et ne produit aucune erreur : on confronte
+// les noms employés à la liste réelle du paquet.
+const usedGm = [...new Set([...code.matchAll(/gm_[a-z0-9_]+/g)].map((m) => m[0]))];
+if (usedGm.length) {
+  try {
+    const gmSrc = readFileSync(resolve(HERE, '../node_modules/@strudel/soundfonts/gm.mjs'), 'utf8');
+    const known = new Set([...gmSrc.matchAll(/gm_[a-z0-9_]+/g)].map((m) => m[0]));
+    const unknown = usedGm.filter((n) => !known.has(n));
+    if (unknown.length) problems.push(`soundfont(s) inexistant(s), donc muet(s) : ${unknown.join(', ')}`);
+  } catch {
+    remarks.push('liste des soundfonts non vérifiée (@strudel/soundfonts absent)');
+  }
+}
+
 const report = {
   file,
   ok: problems.length === 0,

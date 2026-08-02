@@ -56,7 +56,7 @@ Se patterne : `.bank("<RolandTR808 RolandTR909>")`.
 
 Préfixe `gm_` : `gm_piano`, `gm_epiano1`, `gm_acoustic_bass`, `gm_electric_bass_finger`,
 `gm_electric_guitar_clean`, `gm_electric_guitar_muted`, `gm_synth_strings_1`, `gm_accordion`,
-`gm_lead_6_voice`, `gm_pad_2_warm`, `gm_xylophone`, `gm_church_organ`, `gm_flute`,
+`gm_lead_6_voice`, `gm_pad_warm`, `gm_xylophone`, `gm_church_organ`, `gm_flute`,
 `gm_trumpet`, `gm_marimba`… Variante de banque : `gm_accordion:2`.
 Raccourci `.piano()` pour un piano acoustique.
 
