@@ -1,0 +1,182 @@
+// "Blackout Amen" — drum'n'bass sombre avec section dubstep half-time — 174 BPM — F phrygien
+// Structure : intro 8 / drop DnB 16 / effondrement 8 / dubstep half-time 16 / remontée 8 / drop DnB 16 / outro 8
+samples('github:yaxu/clean-breaks')
+setcpm(174/4)
+
+// ---------------------------------------------------------------- timbres
+
+// le break découpé en 16 tranches (= 16 temps du 4 mesures d'origine)
+const brk = p => s("amen").splice(16, p).cut(1);
+
+const reese = x => x
+  .s("sawtooth")
+  .layer(y => y, y => y.add(note(.13)), y => y.add(note(-.11)).s("square"))
+  .ftype(1).lpq(9).shape(.6).clip(1);
+
+const metal = x => x
+  .s("sine").fm(5).fmh(2.51).fmattack(.001).fmdecay(.09).fmsustain(0)
+  .attack(.001).decay(.14).sustain(0)
+  .delay(".45:.1875:.62").room(.7).roomsize(7).orbit(1);
+
+// ---------------------------------------------------------------- break
+
+const brkFar = brk("<[0 1 2 3] [4 5 6 7] [8 9 10 11] [12 13 14 15]>")
+  .lpf(520).hpf(140).degradeBy(.35).gain(.42).room(.8).roomsize(8).orbit(1);
+
+const brkA = brk("<[0 1 2 3] [4 5 6 7] [8 9 10 11] [12 13 [14 14] 15]>")
+  .sometimesBy(.22, ply("<2 2 3>")).rarely(mul(speed(-1)))
+  .shape(.35).gain(.8).room(.12);
+
+const brkCollapse = brk("<[0@2 4@2] [8@3 ~] [0@2 ~ 12] [~ ~ ~ ~]>")
+  .lpf(sine.rangex(3000, 400).slow(8)).jux(rev)
+  .degradeBy("<0 .2 .5 .8>").gain(.6).room(.75).roomsize(9).orbit(1);
+
+const brkDub = brk("<[0@2 8@2] [4@2 12@2]>")
+  .sometimesBy(.18, ply(2)).crush(7)
+  .lpf(2200).gain(.5).room(.3);
+
+const brkLift = brk("<[0 1 2 3] [4 5 [6 6] 7] [8 9 10 11] [12 [13 13] [14 14 14 14] 15]>")
+  .lpf(saw.rangex(700, 9000).slow(8)).ply("<1 1 1 2>")
+  .gain(saw.range(.35, .8).slow(8)).room(.3);
+
+const brkB = brk("<[0 1 2 3] [4 [5 5] 6 7] [8 9 [10 10] 11] [12 [13 13] [14 14] [15 15 15 15]]>")
+  .sometimesBy(.3, ply("<2 3 4>")).sometimesBy(.15, mul(speed(-1)))
+  .shape(.45).gain(.85).room(.15).jux(x => x.late(.004));
+
+const brkOut = brk("<[0 1 2 3] [4 5 ~ ~] [8 ~ ~ ~] [~ ~ ~ ~]>")
+  .lpf(sine.rangex(1400, 250).slow(8)).degradeBy("<.2 .4 .6 .85>")
+  .gain(.45).room(.9).roomsize(9).orbit(1);
+
+$: arrange(
+  [8, brkFar], [16, brkA], [8, brkCollapse], [16, brkDub],
+  [8, brkLift], [16, brkB], [8, brkOut],
+)
+
+// ---------------------------------------------------------------- kick & snare (le poids)
+
+const dnbKit = stack(
+  s("bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~").bank("RolandTR808").lpf(160).shape(.5).gain(1).duck(1),
+  s("~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ <~ sd> ~").bank("RolandTR909").shape(.4).gain(.85).room(.25),
+);
+
+const halfKit = stack(
+  s("bd ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ <~ bd> ~ ~ ~ ~").bank("RolandTR808").lpf(150).shape(.6).gain(1).duck(1),
+  s("~ ~ ~ ~ ~ ~ ~ ~ [sd,cp] ~ ~ ~ ~ ~ ~ ~").bank("RolandTR909").shape(.35).gain(.9)
+    .room(.5).roomsize(5).orbit(1),
+);
+
+$: arrange(
+  [8, silence], [16, dnbKit], [8, dnbKit.mask("<1 1 1 1 1 0 0 0>").degradeBy(.3)],
+  [16, halfKit], [8, halfKit.mask("<1 1 1 1 1 1 0 0>")],
+  [16, dnbKit.superimpose(x => x.s("rim").gain(.3).late(1/32).hpf(900))], [8, silence],
+)
+
+// ---------------------------------------------------------------- charleston / rides
+
+const dnbHats = stack(
+  s("hh*16").bank("RolandTR909").gain("[.42 .22 .3 .22]*4").pan(sine.fast(3).range(.3, .7)).hpf(4000),
+  s("~ ~ oh ~ ~ ~ ~ oh").bank("RolandTR909").gain(.28).delay(".3:.09:.5").orbit(1),
+);
+
+const dubHats = s("hh ~ hh hh ~ hh ~ [hh hh]").bank("RolandTR808")
+  .gain("[.4 .2]*4").hpf(5000).pan(perlin.range(.35, .65)).degradeBy(.15);
+
+$: arrange(
+  [8, s("hh*8").gain(.16).hpf(6000).degradeBy(.5).room(.6).orbit(1)],
+  [16, dnbHats], [8, dnbHats.mask("<1 1 1 1 0 0 0 0>")],
+  [16, dubHats], [8, dnbHats.gain(saw.range(.25, 1).slow(8))],
+  [16, dnbHats.sometimesBy(.2, ply(2))], [8, s("hh*8").gain(.14).hpf(6000).degradeBy(.6).room(.7).orbit(1)],
+)
+
+// ---------------------------------------------------------------- basse
+
+const bassNotes = "<f1 f1 [db2 c2] gb1>";
+
+const dnbBass = note(bassNotes)
+  .struct("x ~ ~ x ~ x ~ ~ x ~ ~ ~ x ~ x ~")
+  .apply(reese)
+  .lpf(sine.rangex(190, 1500).slow(8))
+  .gain(.6).orbit(2);
+
+const subDnb = note(bassNotes).s("sine").struct("x@3 x@2 x@3").clip(1).lpf(110).gain(.9).duck(1);
+
+// le LFO n'est lu qu'au déclenchement : on redéclenche en doubles-croches pour l'entendre bouger
+const wobble = note("<f1 f1 db1 c1 f1 gb1 db1 c1>/2")
+  .struct("x*16")
+  .s("sawtooth")
+  .superimpose(x => x.add(note(12)).gain(.3))
+  .lpf(sine.rangex(150, 2200).fast("<1 2 4 2 1 4 8 2>")).lpq(13).ftype(1)
+  .distort("1.3:.45").shape(.4).attack(.004).clip(1).gain(.7).orbit(2);
+
+const subDub = note("<f1 f1 db1 c1 f1 gb1 db1 c1>/2").s("sine").clip(1).lpf(100).gain(1).duck(1);
+
+$: arrange(
+  [8, note("f1").s("sine").clip(1).lpf(90).gain(saw.range(.2, .8).slow(8))],
+  [16, stack(dnbBass, subDnb)],
+  [8, stack(dnbBass, subDnb).mask("<1 1 1 0 0 0 0 0>")],
+  [16, stack(wobble, subDub)],
+  [8, stack(wobble.lpf(saw.rangex(200, 3400).slow(2)), subDub).mask("<1 1 1 1 1 1 1 0>")],
+  [16, stack(dnbBass.sometimesBy(.2, ply(2)), subDnb)],
+  [8, note("f1").s("sine").clip(1).lpf(90).gain(isaw.range(.1, .7).slow(8))],
+)
+
+// ---------------------------------------------------------------- drone & nappes menaçantes
+
+const drone = note("<f1 f1 f1 gb1>").s("sawtooth")
+  .superimpose(x => x.add(note(.12)))
+  .attack(2).decay(1).sustain(.8).release(2).clip(1)
+  .lpf(sine.rangex(130, 800).slow(24)).lpq(7)
+  .gain(.3).room(.9).roomsize(9).orbit(1);
+
+const highDrone = note("<c5 db5 c5 gb4>").s("square")
+  .attack(1.5).release(2).sustain(.6).clip(1)
+  .lpf(sine.rangex(600, 2600).slow(16)).lpq(11)
+  .gain(.13).pan(sine.slow(11)).room(1).roomsize(9).orbit(1);
+
+$: arrange(
+  [8, stack(drone, highDrone)], [16, drone.gain(.24)],
+  [8, stack(drone, highDrone).gain(.28)], [16, drone.gain(.22)],
+  [8, stack(drone, highDrone.gain(.18))], [16, drone.gain(.2)],
+  [8, stack(drone, highDrone)],
+)
+
+// ---------------------------------------------------------------- stabs métalliques
+
+const stabA = n("0 ~ ~ 1 ~ ~ 4 ~".fast(2)).scale("F3:phrygian")
+  .apply(metal).degradeBy(.55).gain(.4).pan(rand);
+
+const stabDub = n("<0 1 4 6>").scale("F4:phrygian")
+  .struct("~ ~ ~ ~ ~ ~ x ~ ~ ~ ~ x ~ ~ ~ ~")
+  .apply(metal).crush(6).gain(.45).pan("<.3 .7>");
+
+const stabB = n("0 ~ 1 4 ~ 6 4 1".fast(2).off(1/8, add(7))).scale("F3:phrygian")
+  .apply(metal).degradeBy(.45).gain(.42).pan(rand);
+
+$: arrange(
+  [8, silence], [16, stabA.mask("<0 0 0 0 1 1 1 1>")],
+  [8, stabA.gain(.3).degradeBy(.7)], [16, stabDub],
+  [8, stabA.mask("<0 0 0 0 1 1 1 1>")], [16, stabB], [8, stabA.gain(.25).degradeBy(.75)],
+)
+
+// ---------------------------------------------------------------- risers, impacts, souffle
+
+const riser = s("white*8").clip(1)
+  .hpf(saw.rangex(300, 9000).slow(8)).hpq(6)
+  .gain(saw.range(.02, .4).slow(8)).pan(sine.fast(2)).room(.6).orbit(1);
+
+const impact = stack(
+  s("cr").bank("RolandTR909").gain(.65).room(.9).roomsize(9).orbit(1),
+  s("bd").bank("RolandTR808").lpf(120).gain(1).shape(.7),
+).mask("<1 0 0 0 0 0 0 0>");
+
+const noiseBed = s("brown").clip(1).lpf(320).gain(.08);
+
+$: arrange(
+  [8, stack(noiseBed, riser.mask("<0 0 0 0 1 1 1 1>"))],
+  [16, stack(noiseBed, impact)],
+  [8, stack(noiseBed, s("cr").speed(-1).gain(.4).room(.8).orbit(1).mask("<0 0 0 0 0 0 1 1>"))],
+  [16, stack(noiseBed, impact)],
+  [8, stack(noiseBed, riser)],
+  [16, stack(noiseBed, impact)],
+  [8, noiseBed.gain(.06)],
+)
