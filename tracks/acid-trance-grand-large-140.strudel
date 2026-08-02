@@ -1,0 +1,121 @@
+// "Grand Large" — acid trance estival, narratif — 140 BPM — La mineur → Do majeur
+// intro (mer avant l'aube) → départ → montée acid → breakdown (la mer, la bouée)
+// → drop acid → finale : Ode à la joie (Beethoven, 9e symphonie) en Do majeur
+setcpm(140/4)
+
+// ——— timbres partagés ————————————————————————————————————————
+// supersaw : trois voix légèrement désaccordées
+const wide = x => x.layer(y => y, y => y.add(note(.13)), y => y.add(note(-.12)));
+
+// nappe large et scintillante
+const padVoice = x => wide(x).s("sawtooth")
+  .attack(1.1).decay(.4).sustain(.75).release(1.6)
+  .lpf(sine.rangex(700, 2800).slow(24)).lpq(4)
+  .room(.85).roomsize(7).delay(.28).delaytime(3/8).delayfeedback(.45)
+  .gain(.3).orbit(1);
+
+const pad = chords => chord(chords).voicing().apply(padVoice);
+
+// 303 : ladder, résonance haute, enveloppe courte, saturation légère
+const acid = (cut, sc) => "0 0 7 0 3 0 12 [10 7]".fast(2).iter(4).scale(sc).note()
+  .sometimesBy(.12, x => x.add(note(12)))
+  .s("sawtooth").ftype(1)
+  .lpf(cut).lpq(17).lpenv(4.5).lpa(.01).lpd(.1)
+  .decay(.12).sustain(0).distort("1.2:.55")
+  .delay(.3).delaytime(3/16).delayfeedback(.42).room(.3)
+  .gain(.6).orbit(1);
+
+// ——— la mer ——————————————————————————————————————————————————
+// ressac : bruit filtré par un LFO très lent, la vague va et vient
+const sea = g => stack(
+  s("brown/2").clip(1).attack(1.3).sustain(1).release(1.5)
+    .hpf(150).lpf(sine.rangex(300, 2200).slow(6)).lpq(3)
+    .gain(sine.range(.12 * g, .3 * g).slow(3)).pan(sine.slow(5))
+    .room(.8).roomsize(6).orbit(2),
+  s("white/2").clip(1).attack(.9).sustain(1).release(1.2)
+    .hpf(2600).gain(sine.range(.03 * g, .1 * g).slow(4)).pan(cosine.slow(7))
+    .room(.9).roomsize(8).orbit(2)
+);
+
+// bouée / carillon lointain : cloche FM, delay pointé qui s'étale
+const bell = g => note("<a5 ~ e5 ~ c6 ~ e5 a4>").s("sine")
+  .fm(3.2).fmh(2.7).fmattack(.01).fmdecay(.5).fmsustain(0)
+  .attack(.005).decay(1.7).sustain(0)
+  .delay(.5).delaytime(3/8).delayfeedback(.6).room(.9).roomsize(9)
+  .pan(.62).gain(g).orbit(2);
+
+// ——— batterie ————————————————————————————————————————————————
+const kick = s("bd*4").bank("RolandTR909").shape(.3)
+  .gain(.95).duck(1).duckdepth(.75).duckattack(.12);
+
+const drumsLight = stack(
+  kick,
+  s("hh*8").bank("RolandTR909").gain("[.3 .45]*4").hpf(6000).pan(sine.fast(3))
+);
+
+const drumsFull = stack(
+  kick,
+  s("hh*16").bank("RolandTR909").gain("[.28 .46]*8").hpf(5500).pan(sine.fast(3)),
+  s("[~ oh]*4").bank("RolandTR909").gain(.3).room(.35).orbit(2),
+  s("~ cp ~ cp").bank("RolandTR909").gain(.5).room(.5).roomsize(4).orbit(2)
+);
+
+// ——— basse (contretemps 16e) ——————————————————————————————————
+const bass = roots => note(roots).struct("~ x ~ x".fast(2))
+  .s("sawtooth").lpf(170).lpq(3)
+  .decay(.09).sustain(0).shape(.4).gain(.8);
+
+// ——— arpège scintillant ————————————————————————————————————————
+const arp = x => wide(x).s("sawtooth")
+  .decay(.09).sustain(.18).release(.15)
+  .lpf(sine.rangex(1000, 6500).slow(16)).lpq(6)
+  .delay(.42).delaytime(3/16).delayfeedback(.5).room(.6)
+  .gain(.32).orbit(1);
+
+const shimmer = "0 2 4 7 4 2".fast(2).scale("A4:minor").note().apply(arp);
+
+// ——— Ode à la joie — 8 mesures, une mesure par cycle ——————————
+const odeDegrees = `<[2 2 3 4] [4 3 2 1] [0 0 1 2] [2@3 1@1 1@4]
+                     [2 2 3 4] [4 3 2 1] [0 0 1 2] [1@3 0@1 0@4]>`;
+
+const odeVoice = g => x => wide(x).s("sawtooth")
+  .attack(.01).decay(.3).sustain(.6).release(.3)
+  .lpf(sine.rangex(2000, 7000).slow(8)).lpq(5)
+  .delay(.3).delaytime(3/16).delayfeedback(.35)
+  .room(.55).roomsize(5).gain(g).orbit(1);
+
+const odeHi = odeDegrees.scale("C5:major").note().apply(odeVoice(.5));
+const odeLo = odeDegrees.scale("C4:major").note().apply(odeVoice(.34));
+
+const crash = s("<cr ~ ~ ~ ~ ~ ~ ~>").bank("RolandTR909")
+  .room(.7).roomsize(6).gain(.45).orbit(2);
+
+// ——— arrangement ——————————————————————————————————————————————
+$: arrange(
+  // 1. la mer avant l'aube
+  [8, stack(sea(1), bell(.26), pad("<Am9 Am9 F^9 F^9>").gain(.22))],
+  // 2. on largue les amarres
+  [8, stack(sea(.8), drumsLight, bass("<a1 a1 f1 g1>"), pad("<Am9 F^9 C^9 Gsus>"))],
+  // 3. montée acid — le filtre s'ouvre lentement
+  [16, stack(
+    sea(.5), drumsFull, bass("<a1 a1 f1 g1>"),
+    acid(saw.range(320, 2100).slow(16), "A1:minor"),
+    pad("<Am9 F^9 C^9 Gsus>")
+  )],
+  // 4. breakdown — il ne reste que la mer et la bouée
+  [8, stack(sea(1.3), bell(.32), pad("<Am9 F^9 C^9 Gsus>"), shimmer.degradeBy(.55))],
+  // 5. drop acid plein — filtre grand ouvert
+  [16, stack(
+    sea(.4), drumsFull, bass("<a1 a1 f1 g1>"),
+    acid(sine.rangex(700, 4800).slow(8), "A1:minor"),
+    pad("<Am9 F^9 C^9 Gsus>"), shimmer
+  )],
+  // 6. finale — Ode à la joie, Do majeur
+  [16, stack(
+    drumsFull, crash,
+    bass("<c1 g1 a1 g1 c1 g1 f1 c1>"),
+    acid(sine.rangex(900, 5200).slow(8), "C2:major").gain(.42),
+    pad("<Cadd9 G Am7 Gsus Cadd9 G Fadd9 C^9>"),
+    odeHi, odeLo
+  )]
+)

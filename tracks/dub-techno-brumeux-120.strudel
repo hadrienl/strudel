@@ -1,0 +1,56 @@
+// "Nebelkammer" — dub techno brumeux — 120 BPM — D mineur (aeolien)
+// esthetique Basic Channel / Rhythm & Sound : stabs noyes, kick feutre, tout dans la brume
+setcpm(120/4)
+useRNG('legacy')
+
+// stab : saw detune, filtre mouvant, extinction immediate
+const stab = x => x.s("sawtooth").add(note("0,.08"))
+  .attack(.005).decay(.22).sustain(0)
+  .lpf(perlin.range(450, 1500).slow(16)).lpq(7).ftype(1);
+
+// harmonie commune aux stabs et a la nappe
+const harmony = "<Dm9 Dm9 Am7 Bb^7>/2";
+
+// batterie
+$: s("bd*4").bank("RolandTR909")
+   .lpf(105).lpq(1).shape(.3).gain(.92)
+   .duck(1).duckdepth(.8).duckattack(.12)
+   .room(.15).roomsize(2)
+   .mask("<x@7 ~>/4")
+
+$: s("[~ hh]*2").bank("RolandTR606").gain(.28)
+   .end(perlin.range(.02, .06).slow(8))
+   .delay(.45).delaytime(.375).delayfeedback(.6)
+   .room(.85).roomsize(6).orbit(3)
+   .mask("<~ ~ x@6>/4")
+
+$: s("rim").struct("~ ~ ~ ~ ~ ~ ~ <x ~ ~ x>").speed(.8).gain(.4)
+   .delay(.62).delaytime(.25).delayfeedback(.74)
+   .room(.9).roomsize(8).orbit(4)
+   .mask("<~ ~ ~ x@5>/4")
+
+// basse ronde et profonde, tresillo, sidechainee par le kick
+$: note("<d1 d1 a1 bb1>/2").s("sine").struct("x(3,8)")
+   .clip(.7).attack(.02).decay(.25).sustain(.5).release(.12)
+   .lpf(perlin.range(130, 210).slow(12)).shape(.4).gain(.9)
+   .orbit(1).mask("<~ x@7>/4")
+
+// stabs d'accords — coeur du morceau, delay croche pointee
+$: chord(harmony).voicing().apply(stab)
+   .struct("~ x ~ x ~ x ~ <x [~ x] x ~>")
+   .every(4, early(1/16)).gain(.5)
+   .delay(.72).delaytime(.375).delayfeedback(.79)
+   .room(1).roomsize(8).orbit(1)
+
+// nappes
+$: chord(harmony).voicing().add(note("-12,-11.92"))
+   .s("sawtooth").clip(1)
+   .attack(1.1).decay(1.5).sustain(.55).release(1.8)
+   .lpf(sine.rangex(320, 1000).slow(32)).lpq(3)
+   .gain(.32).room(1).roomsize(9).orbit(2)
+
+// brume : bruit rose filtre, souffle continu
+$: s("pink").struct("<x ~ ~ ~>").clip(4)
+   .attack(3).sustain(.7).release(4)
+   .hpf(180).lpf(perlin.range(400, 1600).slow(24)).lpq(2)
+   .gain(.16).room(1).roomsize(9).orbit(2)
