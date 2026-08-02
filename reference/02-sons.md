@@ -86,6 +86,22 @@ samples('shabda/speech/fr-FR/f:bonjour')
 
 Le chargement est paresseux : le premier déclenchement peut arriver légèrement en retard.
 
+## Banque personnelle
+
+Les samples du projet sont hébergés dans ce dépôt et servis par
+`raw.githubusercontent.com` :
+
+```javascript
+samples('github:hadrienl/strudel')
+s("vague").gain(.4)
+note("a4 c5").s("cloche").clip(1)
+```
+
+**Avant d'utiliser un son de la banque, lire `strudel.json` à la racine du dépôt** pour
+savoir ce qui existe réellement — ne jamais deviner un nom. Convention et procédure
+d'ajout : `samples/README.md`. Régénérer le manifeste après tout ajout avec
+`python3 bin/build-samples-json.py`.
+
 ## Manipulation d'échantillons
 
 | Fonction | Effet |
