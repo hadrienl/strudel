@@ -38,10 +38,15 @@ def main() -> int:
         print(f"aucun dossier {SAMPLES}")
         return 1
 
+    warnings = []
     for folder in sorted(p for p in SAMPLES.iterdir() if p.is_dir()):
         files = sorted(f for f in folder.iterdir() if f.suffix.lower() in AUDIO)
         if not files:
             continue
+        # `-` est le silence en mini-notation et l'espace sépare les événements :
+        # un nom qui en contient serait découpé au lieu d'être joué.
+        if not re.fullmatch(r"[A-Za-z0-9_]+", folder.name):
+            warnings.append(folder.name)
         pitched = {}
         flat = []
         for f in files:
@@ -65,6 +70,9 @@ def main() -> int:
 
     names = [k for k in manifest if k != "_base"]
     print(f"{out} — {len(names)} son(s) : {', '.join(names)}")
+    for w in warnings:
+        print(f"  ⚠️  «{w}» : nom injouable en mini-notation (« - » = silence, l'espace sépare)")
+        print("      → renommer avec des lettres, chiffres ou « _ » uniquement")
     print(f"base : {base}")
     print(f"usage : samples('github:{args.user}/{args.repo}')")
     return 0

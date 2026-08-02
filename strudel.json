@@ -1,6 +1,6 @@
 {
   "_base": "https://raw.githubusercontent.com/hadrienl/strudel/main/samples/",
-  "test-bip": [
-    "test-bip/test-bip.wav"
+  "ohnon": [
+    "ohnon/ohnon.wav"
   ]
 }
