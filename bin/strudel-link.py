@@ -30,6 +30,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("source", help="fichier .strudel, ou '-' pour lire stdin")
     parser.add_argument("--open", action="store_true", help="ouvrir le lien dans le navigateur (macOS)")
+    parser.add_argument("--copy", action="store_true", help="copier le lien dans le presse-papier (macOS)")
+    parser.add_argument("--quiet", action="store_true", help="ne pas afficher l'URL")
     parser.add_argument("--base-url", default=BASE_URL, help=f"REPL cible (défaut: {BASE_URL})")
     args = parser.parse_args()
 
@@ -39,10 +41,26 @@ def main() -> int:
         return 1
 
     url = code_to_url(code, args.base_url)
-    print(url)
 
+    if not args.quiet:
+        print(url)
+
+    # Au-delà de quelques milliers de caractères, un copier-coller depuis le terminal
+    # tronque l'URL : le REPL reçoit un patch coupé et signale une erreur de syntaxe
+    # trompeuse, au milieu du code. Mieux vaut ouvrir ou copier directement.
+    if len(url) > 4000 and not (args.open or args.copy):
+        print(
+            f"\n⚠️  URL de {len(url)} caractères : un copier-coller depuis le terminal la coupera.\n"
+            f"    Utilise --open (ouvre le navigateur) ou --copy (presse-papier).",
+            file=sys.stderr,
+        )
+
+    if args.copy:
+        subprocess.run(["pbcopy"], input=url.encode(), check=False)
+        print(f"lien copié dans le presse-papier ({len(url)} caractères)", file=sys.stderr)
     if args.open:
         subprocess.run(["open", url], check=False)
+        print(f"ouvert dans le navigateur ({len(url)} caractères)", file=sys.stderr)
     return 0
 
 

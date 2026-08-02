@@ -29,9 +29,15 @@ Le cycle est : écrire/éditer `tracks/<slug>.strudel` → générer le lien →
 le lien en premier.
 
 ```bash
-python3 bin/strudel-link.py tracks/<slug>.strudel          # affiche l'URL
 python3 bin/strudel-link.py tracks/<slug>.strudel --open   # ouvre le navigateur
+python3 bin/strudel-link.py tracks/<slug>.strudel --copy   # presse-papier
+python3 bin/strudel-link.py tracks/<slug>.strudel          # affiche l'URL
 ```
+
+**Le patch entier est encodé dans l'URL** : 200 lignes de code donnent plus de 10 000
+caractères. Un copier-coller depuis un terminal tronque une URL de cette taille, et le
+REPL signale alors une erreur de syntaxe *au milieu* du code — symptôme trompeur qui
+désigne le transport, pas le patch. Pour tout morceau un peu long, préférer `--open`.
 
 Le REPL Strudel décode le code depuis le hash de l'URL (`base64` UTF-8 puis
 `encodeURIComponent`) : le lien est autoportant, rien n'est stocké côté serveur.
