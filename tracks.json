@@ -1,0 +1,61 @@
+[
+  {
+    "file": "tracks/acid-trance-grand-large-140.strudel",
+    "title": "Grand Large",
+    "tags": [
+      "acid trance estival, narratif",
+      "140 BPM",
+      "La mineur → Do majeur"
+    ],
+    "structure": "",
+    "lines": 121,
+    "bytes": 5556
+  },
+  {
+    "file": "tracks/demo-techno-melancolique.strudel",
+    "title": "Verre dépoli",
+    "tags": [
+      "techno mélancolique",
+      "132 BPM",
+      "Sol mineur"
+    ],
+    "structure": "",
+    "lines": 32,
+    "bytes": 1225
+  },
+  {
+    "file": "tracks/dnb-sombre-dubstep-174.strudel",
+    "title": "Blackout Amen",
+    "tags": [
+      "drum'n'bass sombre avec section dubstep half-time",
+      "174 BPM",
+      "F phrygien"
+    ],
+    "structure": "intro 8 / drop DnB 16 / effondrement 8 / dubstep half-time 16 / remontée 8 / drop DnB 16 / outro 8",
+    "lines": 182,
+    "bytes": 7340
+  },
+  {
+    "file": "tracks/dub-techno-brumeux-120.strudel",
+    "title": "Nebelkammer",
+    "tags": [
+      "dub techno brumeux",
+      "120 BPM",
+      "D mineur (aeolien)"
+    ],
+    "structure": "",
+    "lines": 56,
+    "bytes": 2031
+  },
+  {
+    "file": "tracks/oh-nooon-generique-soap-112.strudel",
+    "title": "OH NOOOON — Générique Extended Remix",
+    "tags": [
+      "parodie de soap 80s qui vire house",
+      "112 BPM"
+    ],
+    "structure": "",
+    "lines": 191,
+    "bytes": 9327
+  }
+]
