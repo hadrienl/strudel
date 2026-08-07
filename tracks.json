@@ -57,5 +57,17 @@
     "structure": "",
     "lines": 191,
     "bytes": 9327
+  },
+  {
+    "file": "tracks/prisme-ai-refraction-172.strudel",
+    "title": "Réfraction",
+    "tags": [
+      "électro punk / Prisme.ai",
+      "172 BPM",
+      "E phrygien"
+    ],
+    "structure": "intro 8 / couplet 16 / refrain 16 / breakdown 8 / remontée 8 / refrain 16 / outro 8",
+    "lines": 215,
+    "bytes": 8129
   }
 ]

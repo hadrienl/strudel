@@ -1,0 +1,215 @@
+// "Réfraction" — électro punk / Prisme.ai — 172 BPM — E phrygien
+// Un faisceau blanc (motif unique, mono, filtré) entre dans le prisme et ressort
+// décomposé en trois copies transposées, décalées et panoramiquées.
+// Structure : intro 8 / couplet 16 / refrain 16 / breakdown 8 / remontée 8 / refrain 16 / outro 8
+setcpm(172/4)
+
+// ---------------------------------------------------------------- timbres
+
+// le faisceau : saw sale, filtre ladder résonant, waveshaping
+const beam = x => x
+  .s("sawtooth").ftype(1).lpq(12)
+  .attack(.002).decay(.1).sustain(0)
+  .distort("1.1:.4");
+
+// la réfraction : un motif unique éclaté en trois rais de couleur
+const prism = p => p.layer(
+  x => x.scaleTranspose(0).note().pan(.12).gain(.55),
+  x => x.scaleTranspose(2).early(1/16).note().pan(.5).gain(.42).add(note(.08)),
+  x => x.scaleTranspose(4).early(1/8).note().pan(.88).gain(.3).add(note(-.07)),
+);
+
+// guitare punk : power chord saturé, octave doublée
+const guitar = x => x
+  .s("sawtooth")
+  .superimpose(y => y.add(note(12)).gain(.3))
+  .distort("2:.3").coarse(2)
+  .lpf(2800).hpf(170).lpq(4)
+  .attack(.001).decay(.18).sustain(.2).release(.06).clip(.75);
+
+// basse : saw + square une octave dessous, ladder + distorsion
+const bassVoice = x => x
+  .s("sawtooth")
+  .superimpose(y => y.s("square").add(note(-12)).gain(.5))
+  .ftype(1).lpq(9).distort("1.4:.45").shape(.4)
+  .attack(.001).clip(1);
+
+// ---------------------------------------------------------------- kick & caisse claire
+
+const punkKit = stack(
+  s("bd ~ ~ bd ~ ~ bd ~ ~ ~ bd ~ ~ bd ~ ~").bank("RolandTR909").shape(.5).gain(.95).duck(1),
+  s("~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ <~ sd> ~").bank("RolandTR606").shape(.45).gain(.8).room(.18),
+);
+
+const dBeat = stack(
+  s("bd ~ bd ~ ~ ~ bd ~ bd ~ ~ bd ~ ~ bd ~").bank("RolandTR909").shape(.55).gain(.95).duck(1),
+  s("~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ <~ sd>").bank("RolandTR606").shape(.5).gain(.85).room(.2),
+);
+
+const rollUp = stack(
+  s("bd*4").bank("RolandTR909").shape(.5).gain(.9).duck(1),
+  s("sd*4").bank("RolandTR606").ply("<1 1 2 2 2 4 4 8>").gain(saw.range(.35, .85).slow(8)).room(.25),
+);
+
+$: arrange(
+  [8, s("bd ~ ~ ~ ~ ~ ~ ~").bank("RolandTR909").lpf(180).gain(.7).duck(1)],
+  [16, punkKit],
+  [16, dBeat],
+  [8, silence],
+  [8, rollUp],
+  [16, dBeat.superimpose(x => x.s("rim").gain(.25).late(1/32).hpf(1200))],
+  [8, punkKit.mask("<1 1 1 1 1 1 1 0>").degradeBy(.25)],
+)
+
+// ---------------------------------------------------------------- charleston, crash
+
+const hats = stack(
+  s("hh*16").bank("RolandTR606").gain("[.42 .2 .3 .2]*4").hpf(5000).pan(sine.fast(3).range(.35, .65)),
+  s("~ ~ ~ oh").bank("RolandTR606").gain(.3).delay(".25:.09:.45").orbit(1),
+);
+
+const crashHats = stack(
+  s("hh*16").bank("RolandTR606").gain("[.5 .22 .34 .22]*4").hpf(4200).sometimesBy(.15, ply(2)),
+  s("cr ~ ~ ~").bank("RolandTR909").gain("<.6 0 .3 0>").room(.6).roomsize(6).orbit(1),
+  s("~ oh ~ oh").bank("RolandTR606").gain(.26),
+);
+
+$: arrange(
+  [8, s("hh*8").bank("RolandTR606").gain(.18).hpf(7000).degradeBy(.5).crush(5).room(.5).orbit(1)],
+  [16, hats],
+  [16, crashHats],
+  [8, s("hh*16").gain(perlin.range(.05, .28).fast(2)).hpf(6000).degradeBy(.45).room(.7).orbit(1)],
+  [8, s("hh*16").bank("RolandTR606").gain(saw.range(.12, .6).slow(8)).hpf(saw.rangex(3000, 9000).slow(8))],
+  [16, crashHats],
+  [8, hats.gain(.6).degradeBy(.3)],
+)
+
+// ---------------------------------------------------------------- basse saturée
+
+const bassLine = "<e1 e1 f1 e1 e1 e1 d1 c1>";
+
+const bassVerse = note(bassLine)
+  .struct("x ~ x x ~ x ~ x x ~ x ~ x ~ x x")
+  .apply(bassVoice)
+  .lpf(sine.rangex(260, 1100).slow(16))
+  .gain(.62).orbit(2);
+
+const bassChorus = note(bassLine)
+  .struct("x*16")
+  .apply(bassVoice)
+  .lpf(sine.rangex(320, 1700).slow(8))
+  .gain("[.68 .5]*8").orbit(2);
+
+const sub = note(bassLine).s("sine").clip(1).lpf(105).gain(.85).duck(1);
+
+$: arrange(
+  [8, note("e1").s("sine").clip(1).lpf(95).gain(saw.range(.2, .75).slow(8))],
+  [16, stack(bassVerse, sub)],
+  [16, stack(bassChorus, sub)],
+  [8, note("<e1 e1 f1 c1>").apply(bassVoice).struct("x@3 x").lpf(sine.rangex(180, 900).slow(8)).gain(.5).orbit(2)],
+  [8, stack(bassChorus.lpf(saw.rangex(300, 2600).slow(8)), sub.gain(.7))],
+  [16, stack(bassChorus.sometimesBy(.18, ply(2)), sub)],
+  [8, stack(bassVerse.degradeBy(.3), sub.gain(.6))],
+)
+
+// ---------------------------------------------------------------- power chords
+
+const chordRoot = "<e2 e2 f2 e2 e2 e2 d2 c2>";
+
+const chugs = note(chordRoot).add(note("0,7,12"))
+  .struct("x x ~ x ~ x x ~ x ~ x x ~ x ~ x")
+  .apply(guitar).gain(.45).room(.14);
+
+const wall = note(chordRoot).add(note("0,7,12"))
+  .struct("x*8")
+  .apply(guitar).sustain(.35).clip(1)
+  .gain("[.5 .38]*4").room(.2).jux(x => x.late(.005));
+
+$: arrange(
+  [8, silence],
+  [16, chugs.mask("<0 0 0 0 1 1 1 1>")],
+  [16, wall],
+  [8, note("<e3 f3>").add(note("0,7")).apply(guitar).struct("x@3 x").sustain(.6).clip(1)
+      .lpf(sine.rangex(400, 3000).slow(8)).gain(.3).room(.7).orbit(1)],
+  [8, chugs.gain(saw.range(.2, .5).slow(8))],
+  [16, wall.sometimesBy(.2, ply(2))],
+  [8, wall.mask("<1 1 1 1 1 1 0 0>").gain(.4)],
+)
+
+// ---------------------------------------------------------------- le prisme (lead réfracté)
+
+const steps = "0 ~ 3 5 ~ 7 5 3".fast(2);
+const theme = steps.scale("E4:phrygian");
+// l'écho harmonisé doit être ajouté aux degrés, avant la gamme
+const themeWide = steps.off(1/8, add(7)).scale("E4:phrygian");
+
+// faisceau blanc : une seule voie, mono, filtre serré
+const whiteBeam = theme.note().apply(beam)
+  .lpf(sine.rangex(500, 2200).slow(16)).pan(.5).gain(.32)
+  .degradeBy(.4).delay(".3:.1875:.5").room(.5).orbit(3);
+
+const spectrum = prism(theme).apply(beam)
+  .lpf(sine.rangex(900, 6500).slow(16))
+  .delay(".28:.1875:.55").room(.35).orbit(3);
+
+const spectrumWide = prism(themeWide).apply(beam)
+  .lpf(saw.rangex(1200, 9000).slow(8))
+  .delay(".35:.09375:.6").room(.45).orbit(3);
+
+$: arrange(
+  [8, whiteBeam.mask("<0 0 1 1 1 1 1 1>")],
+  [16, whiteBeam.gain(.28).mask("<0 0 0 0 0 0 1 1>")],
+  [16, spectrum],
+  [8, spectrumWide.gain(.5).crush("<16 8 6 4>")],
+  [8, spectrum.degradeBy(.3).gain(saw.range(.2, .6).slow(8))],
+  [16, spectrumWide],
+  [8, whiteBeam.gain(.3).degradeBy(.6)],
+)
+
+// ---------------------------------------------------------------- glitch machinique (l'IA)
+
+const glitch = s("rim*16").bank("RolandTR606")
+  .degradeBy(.62).speed(rand.range(.6, 1.8)).crush("<8 6 4 5>")
+  .pan(rand).gain(.32).delay(".3:.0625:.5").orbit(1);
+
+const dataBurst = s("hh*16").speed(irand(8).add(1).div(4))
+  .degradeBy(.55).crush(4).coarse("<1 2 4 2>")
+  .hpf(1800).pan(rand).gain(.28).orbit(1);
+
+const vox = note("<e4 g4 b4 c5>").s("square")
+  .struct("~ x ~ ~ x ~ ~ x ~ ~ ~ x ~ ~ x ~")
+  .vowel("<a e i o>").crush(6).decay(.08).sustain(0)
+  .gain(.3).pan(perlin).delay(".4:.125:.6").room(.5).orbit(1);
+
+$: arrange(
+  [8, stack(glitch, dataBurst.gain(.2))],
+  [16, glitch.gain(.24)],
+  [16, stack(glitch.degradeBy(.75), vox.mask("<0 0 1 1>"))],
+  [8, stack(dataBurst, vox)],
+  [8, dataBurst.gain(saw.range(.1, .4).slow(8))],
+  [16, stack(glitch.degradeBy(.7), vox.mask("<0 1 0 1>"))],
+  [8, stack(glitch, dataBurst).degradeBy(.4)],
+)
+
+// ---------------------------------------------------------------- souffle, risers, impacts
+
+const noiseBed = s("brown").clip(1).lpf(380).gain(.07);
+
+const riser = s("white*16").clip(1)
+  .hpf(saw.rangex(400, 11000).slow(8)).hpq(7)
+  .gain(saw.range(.02, .38).slow(8)).pan(sine.fast(2)).room(.5).orbit(1);
+
+const impact = stack(
+  s("cr").bank("RolandTR909").speed(-1).gain(.4).room(.85).roomsize(8).orbit(1),
+  s("bd").bank("RolandTR808").lpf(110).shape(.7).gain(.9),
+).mask("<1 0 0 0 0 0 0 0>");
+
+$: arrange(
+  [8, stack(noiseBed, riser.mask("<0 0 0 0 0 1 1 1>"))],
+  [16, stack(noiseBed, impact)],
+  [16, stack(noiseBed, impact.gain(.7))],
+  [8, stack(noiseBed.gain(.12), s("white").clip(1).lpf(sine.rangex(300, 4000).slow(8)).gain(.1).room(.8).orbit(1))],
+  [8, stack(noiseBed, riser)],
+  [16, stack(noiseBed, impact)],
+  [8, stack(noiseBed.gain(.05), s("cr").speed(-1).gain(.3).room(.9).orbit(1).mask("<0 0 0 0 0 0 1 1>"))],
+)
